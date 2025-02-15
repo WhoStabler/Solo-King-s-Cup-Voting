@@ -129,6 +129,24 @@
       font-size: 1.5em;
       color: var(--highlight);
     }
+    .results {
+      margin-top: 30px;
+      padding: 20px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .results h2 {
+      margin-bottom: 10px;
+      color: var(--highlight);
+    }
+    .results ul {
+      list-style: none;
+      padding-left: 0;
+    }
+    .results li {
+      margin: 5px 0;
+    }
     .footer {
       text-align: center;
       margin-top: 30px;
@@ -148,7 +166,7 @@
   <div class="container">
     <!-- Tournament Logo -->
     <div class="logo-container">
-      <img src="./assest/a-modern-and-energetic-logo-with-the-tex_7ccE_NHpSAel695ZzX661Q_yQpj_UO5STS8i6L2ol1l8g-removebg-preview.png" alt="Solo King's Cup Logo">
+      <img src="./assest/a-modern-and-powerful-typographic-logo-f_tYrn1glgSS2ZiZY6a1ZOHA_yQpj_UO5STS8i6L2ol1l8g-removebg-preview.png" alt="Solo King's Cup Logo">
     </div>
     <h1>Solo King's Cup - Round 3 Schedule & Voting</h1>
     <table>
@@ -225,6 +243,10 @@
         </tr>
       </tbody>
     </table>
+    <!-- Live Vote Counting Session -->
+    <div id="results" class="results">
+      <!-- Vote counts will be displayed here live -->
+    </div>
     <div class="note">
       Agar koi player apna round 3 ka match har jata to wo wild card entry submit karwa ke tour may wapis a sakta, 
       lakin agar koi player is voting session may win kar jata or apna match har bhi jata, phir bhi voting win karny ke wajah se without wild card entry submit karwaye wo tournament may wapis a sakta.
@@ -234,6 +256,9 @@
     </div>
   </div>
   <script>
+    // List of players in Round 3.
+    var players = ["Old Virus 99", "Khizar", "OmegaStabler", "Es Qasim", "X Ruok.77", "Agent FF", "SyedXRuok", "Bilal"];
+
     // Helper: Generate a valid element ID for a player by removing special characters.
     function getIdFromPlayer(player) {
       return "votes_" + player.replace(/[^a-zA-Z0-9]/g, "_");
@@ -249,7 +274,7 @@
       var key = "vote_" + player;
       localStorage.setItem(key, count);
     }
-    // Update the displayed vote count for a given player.
+    // Update the displayed vote count for a given player in the table.
     function updateVoteDisplay(player) {
       var span = document.getElementById(getIdFromPlayer(player));
       if (span) {
@@ -263,8 +288,30 @@
         btn.disabled = true;
       });
     }
+    // Update the live results section.
+    function updateResults() {
+      var resultsDiv = document.getElementById("results");
+      var resultsHTML = "<h2>Live Vote Counting Session</h2><ul>";
+      var maxVotes = -1;
+      var leader = "";
+      players.forEach(function(player) {
+        var votes = getVoteCount(player);
+        resultsHTML += "<li>" + player + ": " + votes + " vote" + (votes !== 1 ? "s" : "") + "</li>";
+        if (votes > maxVotes) {
+          maxVotes = votes;
+          leader = player;
+        }
+      });
+      resultsHTML += "</ul>";
+      if (maxVotes > 0) {
+        resultsHTML += "<p><strong>Current Leader: " + leader + " with " + maxVotes + " vote" + (maxVotes !== 1 ? "s" : "") + ".</strong></p>";
+      } else {
+        resultsHTML += "<p>No votes yet.</p>";
+      }
+      resultsDiv.innerHTML = resultsHTML;
+    }
     // Increase the vote count when a vote button is clicked.
-    // Allows only one vote per user (globally) using the "voted_once" flag.
+    // Allows only one vote per user (global) using the "voted_once" flag.
     function voteForPlayer(player) {
       if (localStorage.getItem("voted_once")) {
         alert("You have already voted!");
@@ -276,17 +323,26 @@
       updateVoteDisplay(player);
       localStorage.setItem("voted_once", "true");
       disableAllVoteButtons();
+      updateResults();
     }
-    // List of players in Round 3.
-    var players = ["Old Virus 99", "Khizar", "OmegaStabler", "Es Qasim", "X Ruok.77", "Agent FF", "SyedXRuok", "Bilal"];
-    // On page load, update vote counts and disable buttons if already voted.
-    window.onload = function() {
+    // Listen for storage changes (if using multiple tabs) to update live.
+    window.addEventListener("storage", function(e) {
+      updateResults();
       players.forEach(function(player) {
         updateVoteDisplay(player);
       });
-      if (localStorage.getItem("voted_once")) {
-        disableAllVoteButtons();
-      }
+    });
+    // On page load, clear all stored votes so that all counts start at 0.
+    window.onload = function() {
+      // Clear votes for our players
+      players.forEach(function(player) {
+        localStorage.removeItem("vote_" + player.replace(/[^a-zA-Z0-9]/g, "_"));
+      });
+      localStorage.removeItem("voted_once");
+      players.forEach(function(player) {
+        updateVoteDisplay(player);
+      });
+      updateResults();
     };
   </script>
 </body>
